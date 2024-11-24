@@ -5,8 +5,26 @@
 
 import random
 import pygame
+import json
 
 from objects import Player, Balls, Dot, Shadow, Particle, Message, BlinkingText, Button
+
+# Função para ler o arquivo JSON e retornar o HighScore
+def load_highscore():
+    try:
+        with open('highscore.json', 'r') as f:
+            data = json.load(f)
+            return data.get('highscore', 0)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return 0  # Retorna 0 caso o arquivo não exista ou esteja corrompido
+
+# Função para salvar o HighScore no arquivo JSON
+def save_highscore(highscore):
+    try:
+        with open('highscore.json', 'w') as f:
+            json.dump({'highscore': highscore}, f)
+    except IOError:
+        pass  # Caso haja erro ao salvar, não faz nada
 
 pygame.init()
 SCREEN = WIDTH, HEIGHT = 288, 512
@@ -123,17 +141,17 @@ dot_group.add(dot)
 shadow = Shadow(dot_index, win)
 shadow_group.add(shadow)
 
+# Load HighScore from the JSON file
+highscore = load_highscore()
+
 
 # VARIABLES *******************************************************************
-
 clicked = False
 num_clicks = 0
 player_alive = True
 sound_on = True
 
 score = 0
-highscore = 0
-
 home_page = True
 game_page = False
 score_page = False
@@ -238,7 +256,6 @@ while running:
 				rad_delta -= 1
 			pygame.draw.circle(win, (0,0,0), CENTER, radius, 5)
 
-
 		pygame.draw.rect(win, color, [CENTER[0]-10, CENTER[1]-MAX_RAD, 20, MAX_RAD*2])
 		pygame.draw.rect(win, color, [CENTER[0]-MAX_RAD, CENTER[1]-10, MAX_RAD*2, 20])
 
@@ -256,8 +273,9 @@ while running:
 					score_fx.play()
 
 					score += 1
-					if highscore <= score:
+					if highscore < score:
 						highscore = score
+						save_highscore(highscore)  # Salvar o novo HighScore no arquivo JSON
 
 			if pygame.sprite.spritecollide(p, ball_group, False) and player_alive:
 				death_fx.play()
